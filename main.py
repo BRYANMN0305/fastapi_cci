@@ -166,6 +166,10 @@ def obtener_qr(usuario: str):
     
 
     return JSONResponse({"message": img_base64})
+
+
+
+
 # Modelo para login de la app
 class LoginApp(BaseModel):
     usuario: str
