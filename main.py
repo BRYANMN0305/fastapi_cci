@@ -554,8 +554,14 @@ class Contacto(BaseModel):
 
 @app.post("/contactar")
 def contactar(enviar: Contacto):
+    mydb = None
+    cursor = None
+
     try:
         mydb = get_db_connection()  # Asegurar conexión válida
+        if mydb is None:
+            raise HTTPException(status_code=500, detail="Error: No se pudo conectar a la base de datos")
+
         cursor = mydb.cursor()
 
         comando = "INSERT INTO contactos (nombre, telefono, email, mensaje) VALUES (%s, %s, %s, %s)"
@@ -567,9 +573,17 @@ def contactar(enviar: Contacto):
         return {"mensaje": "Información enviada correctamente", "datos": valores}
 
     except mysql.connector.Error as error:
-        mydb.rollback()
-        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
+        if mydb:
+            mydb.rollback()
+        print("Error en la base de datos:", error)  # Esto aparecerá en los logs de Render
+        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {str(error)}")
+
+    except Exception as e:
+        print("Error inesperado:", e)  # Esto ayudará a ver qué está fallando en los logs
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
     finally:
-        cursor.close()
-        mydb.close()
+        if cursor:
+            cursor.close()
+        if mydb:
+            mydb.close()
