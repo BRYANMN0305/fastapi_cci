@@ -27,14 +27,13 @@ app.add_middleware(
 
 
 def get_db_connection():
-    # Intento de conexión a la base de datos MySQL en Railway
     try:
         return mysql.connector.connect(
-            host="hopper.proxy.rlwy.net",  # Host de Railway
-            user="root",  # Usuario de Railway
-            password="iUUYMOWEFiNsabeWawAMTnHVMhEBUiNz",  # Contraseña de Railway
-            database="railway",  # Nombre de la base de datos en Railway
-            port=23493  # Puerto de conexión en Railway
+            host=os.environ.get("DB_HOST"),
+            user=os.environ.get("DB_USER"),
+            password=os.environ.get("DB_PASSWORD"),
+            database=os.environ.get("DB_NAME"),
+            port=int(os.environ.get("DB_PORT"))
         )
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error al conectar con la base de datos: {err}")
