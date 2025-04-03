@@ -158,47 +158,56 @@ def registrar_bene(nuevo_bene: Beneficiario):
 
 
 
-@app.get("/obtener_qr/{placa}")
-def obtener_qr(placa: str):
-    mydb = get_db_connection()
-    cursor = mydb.cursor()
+@app.get("/obtener_qr/{usuario}")
+def obtener_qr(usuario: str):
+    """
+    Genera un código QR con la información del vehículo registrado para un beneficiario específico.
+    """
+    try:
+        mydb = get_db_connection()
+        cursor = mydb.cursor()
 
-    print(f"Buscando información de la placa: {placa}")  # DEPURACIÓN
+        print(f"Buscando vehículos del usuario: {usuario}")  # DEPURACIÓN
 
-    # Obtener los datos del vehículo y su beneficiario
-    cursor.execute("""
-        SELECT v.placa, v.tipovehiculo, b.nombre, b.apellido, b.documento
-        FROM vehiculos v
-        JOIN beneficiarios b ON v.documento = b.documento
-        WHERE v.placa = %s
-    """, (placa,))
+        # Buscar al beneficiario y su vehículo
+        cursor.execute("""
+            SELECT b.nombre, b.apellido, b.documento, v.placa, v.tipovehiculo 
+            FROM beneficiarios b
+            JOIN vehiculos v ON b.documento = v.documento
+            WHERE b.usuario = %s
+        """, (usuario,))
 
-    resultado = cursor.fetchone()
-    print(f"Resultado de la consulta: {resultado}")  # DEPURACIÓN
+        resultado = cursor.fetchone()
+        print(f"Resultado de la consulta: {resultado}")  # DEPURACIÓN
 
-    if not resultado:
+        # Si no encuentra el usuario o vehículo, enviar error
+        if not resultado:
+            cursor.close()
+            raise HTTPException(status_code=404, detail=f"QR no encontrado para el usuario {usuario}")
+
+        # Crear el contenido del QR con la información del vehículo y beneficiario
+        datos_qr = (
+            f"Nombre: {resultado[0]}\n"
+            f"Apellido: {resultado[1]}\n"
+            f"Documento: {resultado[2]}\n"
+            f"Placa: {resultado[3]}\n"
+            f"Tipo de vehículo: {resultado[4]}"
+        )
+
+        # Generar QR
+        qr = qrcode.make(datos_qr)
+        buffer = io.BytesIO()
+        qr.save(buffer, format="PNG")
+        img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
         cursor.close()
-        raise HTTPException(status_code=404, detail=f"QR no encontrado para la placa {placa}")
+        return JSONResponse({"qr_code": img_base64})
 
-    # Crear la información del QR con los datos del beneficiario y vehículo
-    datos_qr = (
-        f"Placa: {resultado[0]}\n"
-        f"Tipo de vehículo: {resultado[1]}\n"
-        f"Nombre: {resultado[2]}\n"
-        f"Apellido: {resultado[3]}\n"
-        f"Documento: {resultado[4]}"
-    )
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {err}")
 
-    # Generar el QR
-    qr = qrcode.make(datos_qr)
-    buffer = io.BytesIO()
-    qr.save(buffer, format="PNG")
-    img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-
-    cursor.close()
-    return JSONResponse({"qr_code": img_base64})
-
-
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
 
 
