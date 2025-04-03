@@ -160,40 +160,44 @@ def registrar_bene(nuevo_bene: Beneficiario):
 
 @app.get("/obtener_qr/{placa}")
 def obtener_qr(placa: str):
-    mydb = get_db_connection()  # Abre una nueva conexión
+    mydb = get_db_connection()
     cursor = mydb.cursor()
 
-    # Obtener los datos del vehículo y del beneficiario
+    print(f"Buscando información de la placa: {placa}")  # DEPURACIÓN
+
+    # Obtener los datos del vehículo y su beneficiario
     cursor.execute("""
-        SELECT b.nombre, b.apellido, b.documento, v.placa, v.tipovehiculo
+        SELECT v.placa, v.tipovehiculo, b.nombre, b.apellido, b.documento
         FROM vehiculos v
         JOIN beneficiarios b ON v.documento = b.documento
         WHERE v.placa = %s
     """, (placa,))
 
     resultado = cursor.fetchone()
+    print(f"Resultado de la consulta: {resultado}")  # DEPURACIÓN
+
     if not resultado:
         cursor.close()
-        raise HTTPException(status_code=404, detail="QR no encontrado")
+        raise HTTPException(status_code=404, detail=f"QR no encontrado para la placa {placa}")
 
     # Crear la información del QR con los datos del beneficiario y vehículo
     datos_qr = (
-        f"Nombre: {resultado[0]}\n"
-        f"Apellido: {resultado[1]}\n"
-        f"Documento: {resultado[2]}\n"
-        f"Placa: {resultado[3]}\n"
-        f"Tipo de vehículo: {resultado[4]}"
+        f"Placa: {resultado[0]}\n"
+        f"Tipo de vehículo: {resultado[1]}\n"
+        f"Nombre: {resultado[2]}\n"
+        f"Apellido: {resultado[3]}\n"
+        f"Documento: {resultado[4]}"
     )
 
-    # Generar el QR con la información
+    # Generar el QR
     qr = qrcode.make(datos_qr)
     buffer = io.BytesIO()
     qr.save(buffer, format="PNG")
     img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-    cursor.close()  # Cerrar el cursor
-
+    cursor.close()
     return JSONResponse({"qr_code": img_base64})
+
 
 
 
