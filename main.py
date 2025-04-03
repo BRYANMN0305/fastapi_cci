@@ -191,7 +191,7 @@ def obtener_qr(usuario: str):
             f"Apellido: {resultado[1]}\n"
             f"Documento: {resultado[2]}\n"
             f"Placa: {resultado[3]}\n"
-            f"Tipo de vehículo: {resultado[4]}"
+            f"Tipo de vehiculo: {resultado[4]}"
         )
 
         # Generar QR
