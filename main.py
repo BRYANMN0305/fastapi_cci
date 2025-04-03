@@ -26,6 +26,11 @@ app.add_middleware(
 )
 
 
+
+
+
+
+
 def get_db_connection():
     try:
         return mysql.connector.connect(
@@ -37,6 +42,12 @@ def get_db_connection():
         )
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error al conectar con la base de datos: {err}")
+
+
+
+
+
+
 
 # Modelo para la creación de un nuevo rol
 class Rol(BaseModel):
@@ -68,12 +79,13 @@ def registrar_rol(nuevo_rol: Rol):
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
 
     
-    
-# Crear la carpeta donde se guardarán los QR si no existe
-"""QR_DIR = "qrs_generados"
-os.makedirs(QR_DIR, exist_ok=True)
-"""
-# Modelo para registrar vehículos
+
+
+
+
+
+
+
 class Vehiculo(BaseModel):
     placa: str
     tipovehiculo: str
@@ -139,24 +151,30 @@ def registrar_bene(nuevo_bene: Beneficiario):
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
 
-@app.get("/obtener_qr/{usuario}")
-def obtener_qr(usuario: str):
+
+
+
+
+
+
+
+@app.get("/obtener_qr/{placa}")
+def obtener_qr(placa: str):
     
     mydb = get_db_connection()  # Abre una nueva conexión
     cursor = mydb.cursor()
 
-    # Verificar si el beneficiario ya está registrado
-    cursor.execute("SELECT * FROM beneficiarios WHERE usuario = %s", (usuario,))
+    # Verificar si el vehiculo ya está registrado
+    cursor.execute("SELECT * FROM vehiculos WHERE placa = %s", (placa,))
     resultado = cursor.fetchone()
     if not resultado:
         
         raise HTTPException(status_code=404, detail="QR no encontrado")
         
     datos_qr = (
-            f"Nombre: {resultado[1]}\n"
-            f"Apellido: {resultado[2]}\n"
-            f"Documento: {resultado[3]}\n"
-            f"Teléfono: {resultado[4]}"
+            f"documento: {resultado[1]}\n"
+            f"placa: {resultado[2]}\n"
+            f"tipo_vehiculo: {resultado[3]}\n"
         )
     
     qr = qrcode.make(datos_qr)
@@ -166,6 +184,11 @@ def obtener_qr(usuario: str):
     
 
     return JSONResponse({"message": img_base64})
+
+
+
+
+
 
 
 
@@ -195,6 +218,14 @@ def login(LoginApli: LoginApp):
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {err}")
 
+
+
+
+
+
+
+
+
 # Endpoint para mostrar todos los empleados
 @app.get("/mostrarempleados")
 def mostrarempleados():
@@ -214,6 +245,13 @@ def mostrarempleados():
     except Exception as error:
         print(f"Error en la base de datos: {error}")  # Muestra el error real en la terminal
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
+
+
+
+
+
+
+
 
 # Endpoint para mostrar todos los beneficiarios con sus vehículos
 @app.get("/mostrarbeneficiarios")
@@ -237,6 +275,13 @@ def mostrarbeneficiarios():
     except Exception as error:
         print(f"Error en la base de datos: {error}")  # Muestra el error en la terminal
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
+
+
+
+
+
+
+
 
 # Modelo para el login de los roles
 class LoginRequest(BaseModel):
@@ -269,6 +314,12 @@ def iniciar_sesion(datos: LoginRequest):
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
     
+    
+    
+    
+    
+    
+    
 
 
 @app.put("/actualizarempleado/{id}")
@@ -299,6 +350,14 @@ def actualizarempleado(id:int,nuevorol: Rol):
     except Exception as error:
         return {"resultado":error}
 
+
+
+
+
+
+
+
+
 @app.get("/buscarempleado/{id}")
 def buscarempleado(id: int):
     try:
@@ -315,6 +374,14 @@ def buscarempleado(id: int):
             return {"error": "Empleado no encontrado"}
     except Exception as error:
         return {"error": str(error)}
+
+
+
+
+
+
+
+
 
 @app.delete("/eliminarempleados/{id}")
 def eliminarempleado(id: int):
@@ -337,6 +404,14 @@ def eliminarempleado(id: int):
     
     except Exception as error:
         return {"resultado": str(error)}
+    
+    
+    
+    
+    
+    
+    
+    
     
 
 
@@ -397,6 +472,11 @@ def actualizar_beneficiario(id: int, beneficiario: BeneficiarioUpdate):
         cursor.close()
         
         
+        
+        
+        
+        
+        
 @app.get("/buscarbeneficiario/{id}")
 def buscar_beneficiario(id: int):
     try:
@@ -425,6 +505,12 @@ def buscar_beneficiario(id: int):
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
 
 
+
+
+
+
+
+
 @app.get("/mostraregingresosalida")
 def mostraringresosalida():
     try:
@@ -442,6 +528,10 @@ def mostraringresosalida():
     except Exception as error:
         print(f"Error en la base de datos: {error}")
         raise HTTPException(status_code=500, detail="Error en la base de datos: {error}")
+    
+    
+    
+    
     
     
     
@@ -464,6 +554,11 @@ def eliminar_beneficiario(id: int):
     
     except Exception as error:
         return {"resultado": str(error)}
+    
+    
+    
+    
+    
     
     
 
@@ -492,6 +587,8 @@ def obtener_puestos():
 
 
 
+
+
 @app.get("/ingreso_dia")
 def ingreso_dia():
     try:
@@ -512,6 +609,12 @@ def ingreso_dia():
         return {"error": str(error)}
     
     
+    
+    
+    
+    
+    
+    
 @app.get("/salida_dia")
 def salida_dia():
     try:
@@ -530,6 +633,13 @@ def salida_dia():
     except Exception as error:
         return {"error": str(error)}
 
+
+
+
+
+
+
+
 @app.get("/total_bene")
 def total_bene():
     try:
@@ -544,6 +654,13 @@ def total_bene():
         
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
+
+
+
+
+
+
+
 
 
 class Contacto(BaseModel):
