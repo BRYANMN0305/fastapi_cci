@@ -221,28 +221,28 @@ class LoginApp(BaseModel):
     usuario: str
     contrasena: str
 
-# Endpoint para login en la app
 @app.post("/login")
 def login(LoginApli: LoginApp):
     try:
-# Creación de un cursor para ejecutar la consulta SQL
-        mydb = get_db_connection()  # Abre una nueva conexión
+        mydb = get_db_connection()
         cursor = mydb.cursor(dictionary=True)  
-        cursor.execute("SELECT usuario FROM beneficiarios WHERE usuario = %s AND contrasena = %s",
+        cursor.execute("SELECT usuario, nombre, apellido, telefono FROM beneficiarios WHERE usuario = %s AND contrasena = %s",
                     (LoginApli.usuario, LoginApli.contrasena))
         usuario = cursor.fetchone()
         cursor.close()
 
         if usuario:
-            return {"success": True, "message": "Inicio de sesión exitoso", "usuario": usuario["usuario"]}
+            return {
+                "usuario": usuario["usuario"],
+                "nombre": usuario["nombre"],
+                "apellido": usuario["apellido"],
+                "telefono": usuario["telefono"]
+            }
         else:
             raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
     except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {err}")
-
-
-
+        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {err}")
 
 
 
