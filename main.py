@@ -220,7 +220,7 @@ def obtener_qr(usuario: str):
 class LoginApp(BaseModel):
     usuario: str
     contrasena: str
-
+#rrrtg
 # Endpoint para login en la app
 @app.post("/login")
 def login(LoginApli: LoginApp):
