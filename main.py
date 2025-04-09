@@ -210,7 +210,22 @@ def obtener_qr(usuario: str):
         raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
 
+@app.get("/obtener_qr/{usuario}")
+def obtener_qr(usuario: str):
+    try:
+        # Creamos el código QR con el nombre de usuario
+        qr = qrcode.make(usuario)
+        buffer = io.BytesIO()
+        qr.save(buffer, format="PNG")
+        img_bytes = buffer.getvalue()
+        
+        # Codificamos la imagen en base64
+        img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+        
+        return JSONResponse(content=img_base64)
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"No se pudo generar el QR: {str(e)}")
 
 
 
