@@ -201,7 +201,6 @@ def obtener_qr(usuario: str):
         img_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
         cursor.close()
-        print("GR Generado", img_base64)
         return JSONResponse({"qr_code": img_base64})
 
     except mysql.connector.Error as err:
@@ -217,7 +216,7 @@ def obtener_qr(usuario: str):
 
 
 
-# Modelo para login de la app
+# Modelo para login de la app   
 class LoginApp(BaseModel):
     usuario: str
     contrasena: str
