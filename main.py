@@ -739,7 +739,8 @@ class DatosGrafico(BaseModel):
 def grafico():
     try:
         mydb = get_db_connection()
-        cursor = mydb.cursor()
+        cursor = mydb.cursor(dictionary=True)
+        # Obtener la fecha de hoy y la fecha hace 7 días
 
         hoy = datetime.now()
         hace_7_dias = hoy - timedelta(days=7)
