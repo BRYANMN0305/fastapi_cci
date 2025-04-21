@@ -686,6 +686,7 @@ class Contacto(BaseModel):
     telefono: int
     email: str
     mensaje: str
+    
 @app.post("/contactar")
 def contactar(enviar: Contacto):
     mydb = None
@@ -719,3 +720,56 @@ def contactar(enviar: Contacto):
             cursor.close()
         if mydb:
             mydb.close()
+
+
+
+
+
+# Días de la semana en español
+dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+
+
+class semanal(BaseModel):
+    labels: list
+    ingresos: list
+    salidas: list
+
+@app.get("/semanal", response_model=semanal)
+def semanal():
+    try:
+        mydb = get_db_connection()
+        cursor = mydb.cursor()
+
+        ingresos = [0] * 7
+        salidas = [0] * 7
+
+        # Consulta ingresos por día
+        cursor.execute("""
+            SELECT DAYOFWEEK(fecha_ingreso) AS dia, COUNT(*) AS cantidad
+            FROM registros
+            GROUP BY dia
+        """)
+        for row in cursor.fetchall():
+            dia = (row['dia'] + 5) % 7  # Ajustar para que Lunes sea 0
+            ingresos[dia] = row['cantidad']
+
+        # Consulta salidas por día
+        cursor.execute("""
+            SELECT DAYOFWEEK(fecha_salida) AS dia, COUNT(*) AS cantidad
+            FROM registros
+            WHERE fecha_salida IS NOT NULL
+            GROUP BY dia
+        """)
+        for row in cursor.fetchall():
+            dia = (row['dia'] + 5) % 7
+            salidas[dia] = row['cantidad']
+
+        cursor.close()
+        return {
+            "labels": dias_semana,
+            "ingresos": ingresos,
+            "salidas": salidas
+        }
+
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
