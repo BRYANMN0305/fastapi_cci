@@ -46,7 +46,7 @@ def get_db_connection():
 
 
 
-
+x
 
 
 # Modelo para la creación de un nuevo rol
