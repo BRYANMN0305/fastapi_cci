@@ -5,6 +5,7 @@ from pydantic import BaseModel  # Pydantic para definir modelos de datos
 import mysql.connector  # Conector para interactuar con MySQL
 from fastapi.encoders import jsonable_encoder  # Para convertir los resultados a un formato JSON compatible
 from datetime import datetime
+import pytz
 import qrcode
 import os
 import base64
@@ -608,53 +609,50 @@ def obtener_puestos():
 
 
 
+# Función para obtener la fecha actual de Colombia
+def obtener_fecha_colombia():
+    zona_colombia = pytz.timezone('America/Bogota')
+    fecha_hoy = datetime.now(zona_colombia).strftime('%Y-%m-%d')
+    return fecha_hoy
 
 
 
 
+# Ruta para obtener ingresos del día
 @app.get("/ingreso_dia")
-def ingreso_dia():
-    try:
-# Creación de un cursor para ejecutar la consulta SQL
-        mydb = get_db_connection()  # Abre una nueva conexión
-        cursor = mydb.cursor(dictionary=True)  
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-        
-        cursor.execute("SELECT COUNT(*) AS total FROM registros WHERE DATE(fecha_ingreso) = %s", (fecha_hoy,))
-        resultado = cursor.fetchone()
+def obtener_ingresos_dia():
+    mydb = get_db_connection()  # Abre una nueva conexión
+    cursor = mydb.cursor()
 
-        cursor.close()
+    fecha_actual = obtener_fecha_colombia()
 
-        
-        return {"ingreso_dia": resultado["total"]}
-    
-    except Exception as error:
-        return {"error": str(error)}
-    
-    
-    
-    
-    
-    
-    
-    
+    consulta = "SELECT COUNT(*) FROM registros WHERE fecha_ingreso LIKE %s"
+    cursor.execute(consulta, (f"{fecha_actual}%",))
+    total_ingresos = cursor.fetchone()[0]
+
+    cursor.close()
+    mydb.close()
+
+    return {"total_ingresos": total_ingresos}
+
+
+
+# Ruta para obtener salidas del día
 @app.get("/salida_dia")
-def salida_dia():
-    try:
-# Creación de un cursor para ejecutar la consulta SQL
-        mydb = get_db_connection()  # Abre una nueva conexión
-        cursor = mydb.cursor(dictionary=True)  
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-        
-        cursor.execute("SELECT COUNT(*) AS total FROM registros WHERE fecha_salida IS NOT NULL AND DATE(fecha_salida) = %s", (fecha_hoy,))
-        resultado = cursor.fetchone()
-        
-        cursor.close()
-        
-        return {"salida_dia": resultado["total"]}
-    
-    except Exception as error:
-        return {"error": str(error)}
+def obtener_salidas_dia():
+    mydb = get_db_connection()  # Abre una nueva conexión
+    cursor = mydb.cursor()
+
+    fecha_actual = obtener_fecha_colombia()
+
+    consulta = "SELECT COUNT(*) FROM registros WHERE fecha_salida LIKE %s"
+    cursor.execute(consulta, (f"{fecha_actual}%",))
+    total_salidas = cursor.fetchone()[0]
+
+    cursor.close()
+    mydb.close()
+
+    return {"total_salidas": total_salidas}
 
 
 
