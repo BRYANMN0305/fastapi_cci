@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware  # CORSMiddleware para permit
 from pydantic import BaseModel  # Pydantic para definir modelos de datos
 import mysql.connector  # Conector para interactuar con MySQL
 from fastapi.encoders import jsonable_encoder  # Para convertir los resultados a un formato JSON compatible
-from datetime import datetime
+from datetime import datetime, timedelta # Para manejar fechas y horas
 import qrcode
 import os
 import base64
@@ -729,37 +729,42 @@ def contactar(enviar: Contacto):
 dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
 
-class semanal(BaseModel):
+class DatosGrafico(BaseModel):
     labels: list
     ingresos: list
     salidas: list
 
-@app.get("/semanal", response_model=semanal)
-def semanal():
+
+@app.get("/grafico", response_model=DatosGrafico)
+def grafico():
     try:
         mydb = get_db_connection()
         cursor = mydb.cursor()
 
+        hoy = datetime.now()
+        hace_7_dias = hoy - timedelta(days=7)
+
         ingresos = [0] * 7
         salidas = [0] * 7
 
-        # Consulta ingresos por día
+        # Consulta ingresos últimos 7 días
         cursor.execute("""
             SELECT DAYOFWEEK(fecha_ingreso) AS dia, COUNT(*) AS cantidad
             FROM registros
+            WHERE fecha_ingreso >= %s
             GROUP BY dia
-        """)
+        """, (hace_7_dias,))
         for row in cursor.fetchall():
-            dia = (row['dia'] + 5) % 7  # Ajustar para que Lunes sea 0
+            dia = (row['dia'] + 5) % 7
             ingresos[dia] = row['cantidad']
 
-        # Consulta salidas por día
+        # Consulta salidas últimos 7 días
         cursor.execute("""
             SELECT DAYOFWEEK(fecha_salida) AS dia, COUNT(*) AS cantidad
             FROM registros
-            WHERE fecha_salida IS NOT NULL
+            WHERE fecha_salida IS NOT NULL AND fecha_salida >= %s
             GROUP BY dia
-        """)
+        """, (hace_7_dias,))
         for row in cursor.fetchall():
             dia = (row['dia'] + 5) % 7
             salidas[dia] = row['cantidad']
