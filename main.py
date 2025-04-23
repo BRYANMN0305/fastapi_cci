@@ -213,7 +213,15 @@ def obtener_qr(usuario: str):
 
 
 
+SECRET_KEY_APP = "hjsshjssshjss"
 
+def create_access_token_app(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+        to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY_APP, algorithm="HS256")
+    return encoded_jwt
 
 
 
@@ -235,7 +243,12 @@ def login(LoginApli: LoginApp):
         cursor.close()
 
         if usuario:
-            return {"success": True, "message": "Inicio de sesión exitoso", "usuario": usuario["usuario"]}
+            access_token_expires = timedelta(minutes=5)
+            access_token = create_access_token_app(
+                data={"sub": usuario["usuario"]},
+                expires_delta=access_token_expires
+            )
+            return {"success": True, "message": "Inicio de sesión exitoso", "usuario": usuario["usuario"], "access_token":access_token}
         else:
             raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
@@ -244,6 +257,19 @@ def login(LoginApli: LoginApp):
 
 
 
+class TokenRequestapp(BaseModel):
+    token: str
+
+# Endpoint para verificar el token
+@app.post("/verify_token_app")
+def verify_token_app(datos: TokenRequestapp):
+    try:
+        payload = jwt.decode(datos.token, SECRET_KEY_APP, algorithms=["HS256"])
+        return {"mensaje": "Token válido", "datos": payload}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
 
 
 
