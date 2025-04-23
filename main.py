@@ -304,6 +304,14 @@ def mostrarbeneficiarios():
 
 
 
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from datetime import datetime, timedelta
+import jwt  # Importación correcta
+from database import get_db_connection  # Asumo que tienes esta función para conectarte a tu BD
+
+app = FastAPI()
+
 SECRET_KEY = "fsdfsdfsdfsdfs"
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -314,30 +322,30 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
-    
-
-
-# Modelo para el login de los roles
+# Modelo para el login
 class LoginRequest(BaseModel):
     usuario: str
     contrasena: str
 
-# Endpoint para el login de los roles
+# Endpoint para iniciar sesión
 @app.post("/iniciar_sesion")
 def iniciar_sesion(datos: LoginRequest):
     try:
         usuario = datos.usuario
         contrasena = datos.contrasena
 
-# Creación de un cursor para ejecutar la consulta SQL
-        mydb = get_db_connection()  # Abre una nueva conexión
-        cursor = mydb.cursor(dictionary=True)  
+        mydb = get_db_connection()  # Conexión a la base de datos
+        cursor = mydb.cursor(dictionary=True)
         cursor.execute("SELECT * FROM roles WHERE usuario = %s AND contrasena = %s", (usuario, contrasena))
         usuario_encontrado = cursor.fetchone()
         cursor.close()
 
         if usuario_encontrado:
-            access_token = create_access_token(data={"sub": usuario_encontrado["usuario"], "rol": usuario_encontrado["rol"]})
+            access_token_expires = timedelta(minutes=5)
+            access_token = create_access_token(
+                data={"sub": usuario_encontrado["usuario"], "rol": usuario_encontrado["rol"]},
+                expires_delta=access_token_expires
+            )
             return {
                 "mensaje": "Inicio de sesión exitoso",
                 "usuario": usuario_encontrado["usuario"],
@@ -349,8 +357,22 @@ def iniciar_sesion(datos: LoginRequest):
     
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
-    
-    
+
+# Modelo para verificar token
+class TokenRequest(BaseModel):
+    token: str
+
+# Endpoint para verificar el token
+@app.post("/verify_token")
+def verify_token(datos: TokenRequest):
+    try:
+        payload = jwt.decode(datos.token, SECRET_KEY, algorithms=["HS256"])
+        return {"mensaje": "Token válido", "datos": payload}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
     
     
     
