@@ -11,6 +11,7 @@ import base64
 import io
 from typing import List, Optional
 from fastapi.responses import JSONResponse
+import jwt
 
 
 # Instancia de FastAPI para crear la aplicación
@@ -303,6 +304,16 @@ def mostrarbeneficiarios():
 
 
 
+SECRET_KEY = "fsdfsdfsdfsdfs"
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+        to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
+    return encoded_jwt
+
 
 
 
@@ -326,10 +337,12 @@ def iniciar_sesion(datos: LoginRequest):
         cursor.close()
 
         if usuario_encontrado:
+            access_token = create_access_token(data={"sub": usuario_encontrado["usuario"], "rol": usuario_encontrado["rol"]})
             return {
                 "mensaje": "Inicio de sesión exitoso",
                 "usuario": usuario_encontrado["usuario"],
-                "rol": usuario_encontrado["rol"]
+                "rol": usuario_encontrado["rol"],
+                "access_token": access_token
             }
         else:
             raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
