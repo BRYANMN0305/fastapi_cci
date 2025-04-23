@@ -304,13 +304,7 @@ def mostrarbeneficiarios():
 
 
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from datetime import datetime, timedelta
-import jwt  # Importación correcta
-from database import get_db_connection  # Asumo que tienes esta función para conectarte a tu BD
 
-app = FastAPI()
 
 SECRET_KEY = "fsdfsdfsdfsdfs"
 
