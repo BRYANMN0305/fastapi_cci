@@ -314,7 +314,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
-
+    
 
 
 # Modelo para el login de los roles
@@ -329,14 +329,14 @@ def iniciar_sesion(datos: LoginRequest):
         usuario = datos.usuario
         contrasena = datos.contrasena
 
-        # Creación de un cursor para ejecutar la consulta SQL
+# Creación de un cursor para ejecutar la consulta SQL
         mydb = get_db_connection()  # Abre una nueva conexión
         cursor = mydb.cursor(dictionary=True)  
-        cursor.execute("SELECT * FROM roles WHERE usuario = %s", (usuario,))
+        cursor.execute("SELECT * FROM roles WHERE usuario = %s AND contrasena = %s", (usuario, contrasena))
         usuario_encontrado = cursor.fetchone()
         cursor.close()
 
-        if usuario_encontrado and verify_password(contrasena, usuario_encontrado["contrasena"]):
+        if usuario_encontrado:
             access_token = create_access_token(data={"sub": usuario_encontrado["usuario"], "rol": usuario_encontrado["rol"]})
             return {
                 "mensaje": "Inicio de sesión exitoso",
@@ -348,7 +348,8 @@ def iniciar_sesion(datos: LoginRequest):
             raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
     
     except Exception as error:
-        raise HTTPException(status_code=500, detail="Error en la base de datos")
+        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {error}")
+    
     
     
     
