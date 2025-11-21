@@ -32,11 +32,11 @@ app.add_middleware(
 def get_db_connection():
     try:
         return mysql.connector.connect(
-            host="caboose.proxy.rlwy.net",
-            user="root",
-            password="nCncxYlJOiUluHuUGKXOUXNtVepXMNhLp",
-            database="railway",
-            port=50666
+            host=os.environ.get("DB_HOST"),
+            user=os.environ.get("DB_USER"),
+            password=os.environ.get("DB_PASSWORD"),
+            database=os.environ.get("DB_NAME"),
+            port=int(os.environ.get("DB_PORT"))
         )
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error al conectar con la base de datos: {err}")
