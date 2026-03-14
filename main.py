@@ -35,11 +35,11 @@ from mysql.connector import Error
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
-            host="caboose.proxy.rlwy.net",
-            port=50666,
-            user="root",
-            password="TU_PASSWORD",
-            database="railway"
+            host="10.0.1.56",
+            port=3306,
+            user="BryanAdmin",
+            password="BryManu28180503.",
+            database="cci"
         )
 
         if connection.is_connected():
